@@ -1,40 +1,80 @@
-name: "CaffeNet"
+name: "LogisticRegressionNet"
 layer {
-name: "data"
-          type: "Data"
-          top: "data"
-          top: "label"
-          include {
-phase: TRAIN
-          }   
-      data_param {
-source: "newfile/img_train_lmdb"
-            backend:LMDB
-            batch_size: 128 
-      }   
-
-      transform_param {
-mean_file: "newfile/train_mean.binaryproto"
-               mirror: true
-      }   
+  name: "data"
+  type: "Data"
+  top: "data"
+  top: "label"
+  include {
+    phase: TRAIN
+  }
+  transform_param {
+        mirror: true
+        crop_size: 227
+        mean_file: "newfile/train_mean.binaryproto"
+  }
+  data_param {
+    source: "newfile/img_train_lmdb"
+    batch_size: 256
+    backend: LMDB
+  }
 }
-
 layer {
-name: "data"
-          type: "Data"
-          top: "data"
-          top: "label"
-          include {
-phase: TEST
-          }   
-      transform_param {
-mirror: false
-            crop_size: 227 
-            mean_file: "newfile/test_mean.binaryproto"
-      }   
-      data_param {
-source: "newfile/img_test_lmdb"
-            batch_size: 50
-            backend: LMDB
-      }   
+  name: "data"
+  type: "Data"
+  top: "data"
+  top: "label"
+  include {
+    phase: TEST
+  }
+  transform_param {
+         mirror: false
+         crop_size: 227
+         mean_file: "newfile/test_mean.binaryproto"
+  }
+  data_param {
+         source: "newfile/img_test_lmdb"
+         batch_size: 50
+         backend: LMDB
+  }
 }
+layer {
+  name: "fc1"
+  type: "InnerProduct"
+  bottom: "data"
+  top: "fc1"
+  param {
+    lr_mult: 1
+    decay_mult: 1
+  }
+  param {
+    lr_mult: 2
+    decay_mult: 0
+  }
+  inner_product_param {
+    num_output: 2
+    weight_filler {
+      type: "xavier"
+    }
+    bias_filler {
+      type: "constant"
+      value: 0
+    }
+  }
+}
+layer {
+  name: "loss"
+  type: "SoftmaxWithLoss"
+  bottom: "fc1"
+  bottom: "label"
+  top: "loss"
+}
+#layer {
+#  name: "accuracy"
+#  type: "Accuracy"
+#  bottom: "fc1"
+#  bottom: "label"
+#  top: "accuracy"
+#  include {
+#    phase: TEST
+#  }
+#}
